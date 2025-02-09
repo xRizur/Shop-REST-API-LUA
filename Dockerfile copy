@@ -1,0 +1,65 @@
+FROM ubuntu:20.04
+
+# Ustawienia środowiskowe – tryb produkcyjny z OpenResty
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LAPIS_ENV=production
+ENV LAPIS_OPENRESTY=/usr/local/openresty/nginx/sbin/nginx
+ENV PATH=/usr/local/bin:$PATH
+
+# Instalacja narzędzi niezbędnych do dodania repozytorium OpenResty
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg2 \
+    software-properties-common \
+    lsb-release
+
+# Dodanie repozytorium OpenResty i instalacja OpenResty
+RUN wget -O - https://openresty.org/package/pubkey.gpg | apt-key add - && \
+    add-apt-repository -y "deb http://openresty.org/package/ubuntu $(lsb_release -sc) main" && \
+    apt-get update && \
+    apt-get install -y openresty
+
+# Instalacja pozostałych zależności
+RUN apt-get install -y \
+    liblua5.2-dev \
+    lua5.2 \
+    luarocks \
+    curl \
+    git \
+    build-essential \
+    libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Utworzenie dowiązania symbolicznego, aby nagłówki Lua (np. lua.h) były dostępne pod /usr/include/lua
+RUN ln -s /usr/include/lua5.2 /usr/include/lua
+
+# Instalacja MoonScript oraz modułów Lapis przez LuaRocks
+RUN luarocks install moonscript && \
+    luarocks install lapis && \
+    luarocks install lua-cjson && \
+    luarocks install luasocket
+
+# Upewnij się, że polecenie "moonscript" jest dostępne.
+# Używamy `luarocks path --bin` do wykrycia katalogu, gdzie znajduje się executable,
+# a następnie tworzymy symlink do /usr/bin/moonscript.
+RUN BIN_DIR=$(luarocks path --bin) && \
+    echo "Luadirs: $BIN_DIR" && \
+    if [ -f "$BIN_DIR/moonscript" ]; then \
+      ln -s "$BIN_DIR/moonscript" /usr/bin/moonscript; \
+    else \
+      echo "moonscript executable not found in $BIN_DIR"; \
+    fi
+
+RUN echo "Moonscript is at: $(which moonscript)"
+
+# Ustawienie katalogu roboczego
+WORKDIR /app
+
+# Kopiowanie całego projektu do obrazu (upewnij się, że nginx.conf, app.moon itp. znajdują się w projekcie)
+COPY . /app
+
+# Eksponowanie portu 8080
+EXPOSE 8080
+
+# Uruchomienie serwera Lapis (który w trybie produkcyjnym używa OpenResty oraz pliku nginx.conf)
+CMD ["lapis", "server"]

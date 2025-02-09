@@ -1,0 +1,28 @@
+services:
+  server:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - migrate
+    environment:
+      LAPIS_ENV: production
+      LAPIS_OPENRESTY: /usr/local/openresty/nginx/sbin/nginx
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: shop_db
+    ports:
+      - "5432:5432"
+  migrate:
+    build: .
+    depends_on:
+      - postgres
+    command: lapis migrate --environment=production
+  tests:
+    build: .
+    depends_on:
+      - server
+    command: moonc tests/test_api.moon
