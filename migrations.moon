@@ -46,6 +46,7 @@ import create_table, types from require "lapis.db.schema"
 			{ "description", types.text }
 			{ "price", types.double }
 			{ "amount", types.integer } 
+			{ "imageurl", types.text, null: true }
 
 			"PRIMARY KEY (id)"
 		}

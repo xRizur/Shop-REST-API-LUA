@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Ustawienia środowiskowe
 ENV DEBIAN_FRONTEND=noninteractive
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     lsb-release \
     lua-bitop \
-    libluajit-5.1-dev
+    libluajit-5.1-dev 
 
 # Dodanie repozytorium OpenResty i instalacja OpenResty
 RUN wget -O - https://openresty.org/package/pubkey.gpg | apt-key add - && \
@@ -34,13 +34,23 @@ RUN apt-get install -y \
     libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
+RUN wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.xz \
+    && tar xf expat-2.5.0.tar.xz \
+    && cd expat-2.5.0 \
+    && ./configure --prefix=/usr \
+    && make \
+    && make install
 # (Opcjonalnie) Upewnij się, że luarocks wykorzystuje LuaJIT – zazwyczaj gdy luajit jest zainstalowany, luarocks go wykrywa.
 # Instalacja modułów MoonScript, Lapis, lua-cjson, luasocket oraz lpeg (dla LuaJIT / Lua 5.1)
 RUN luarocks install moonscript && \
     luarocks install lapis && \
     luarocks install lua-cjson && \
     luarocks install luasocket && \
-    luarocks install lpeg 
+    luarocks install lpeg && \
+    luarocks install mimetypes &&\
+    luarocks install luaexpat && \
+    luarocks install luasec && \
+    luarocks install cloud_storage
 
 # Ustawienie katalogu roboczego
 WORKDIR /apps
