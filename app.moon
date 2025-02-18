@@ -1,10 +1,6 @@
+import autoload from require "lapis.util"
+autoload "models"
 
--- lapis = require "lapis"
-
--- RoutesApp = require "routes"
--- lapis.serve RoutesApp
-
--- app.moon
 lapis = require "lapis"
 import Model from require "lapis.db.model"
 import respond_to from require "lapis.application"
@@ -58,19 +54,10 @@ class extends lapis.Application
 
   "/categories/:id[%d]/products/new": respond_to {
     POST: json_params =>
-      -- 3. Obsługa pliku (jeśli został przesłany)
-      file_param = @params.file  -- nazwa inputa w formularzu
+      file_param = @params.file
       if file_param and file_param.filename and file_param.content then
-        -- plik został wysłany
 
-        -- Najpierw sprawdźmy rozszerzenie / typ MIME,
-        -- np. aby ograniczyć się do .png / .jpg:
         content_type = file_param.content_type
-        -- if not (content_type == "image/png" or content_type == "image/jpeg")
-        --   return status: 400, json: { error: "Bad type: #{content_type}, content: #{file_param.content}" }
-
-        -- 4. Wysyłka do GCS
-        -- unikalna nazwa pliku - np. product.id + timestamp
         filename_on_gcs = string.format(
           "products/%d_%d.png",
           ngx.time(), math.random(9999)
@@ -122,32 +109,3 @@ class extends lapis.Application
       render: true
   }
   
-  "/": =>
-    @html ->
-      h1 "Lapis MoonScript Products Catalog REST API"
-
-      h2 "List of endpoints:"
-
-      h3 "Categories"
-
-      p "- GET /categories"
-      
-      p "- POST /categories/new -json params- name: String, description: String"
-
-      p "- GET /categories/[id]"
-
-      p "- PUT /categories/[id] -json params- name: String, description: String"
-
-      p "- DELETE /categories/[id]"
-
-      h3 "Products"
-
-      p "- GET /categories/[category_id]/products"
-      
-      p "- POST /categories/[category_id]/products/new -json params- name: String, description: String, price: Double, amount: Integer"
-
-      p "- GET /categories/[category_id]/products/[product_id]"
-
-      p "- PUT /categories/[category_id]/products/[product_id] -json params- name: String, description: String, price: Double, amount: Integer"
-
-      p "- DELETE /categories/[category_id]/products/[product_id]"

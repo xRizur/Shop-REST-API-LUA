@@ -21,8 +21,3 @@ services:
     depends_on:
       - postgres
     command: lapis migrate --environment=production
-  tests:
-    build: .
-    depends_on:
-      - server
-    command: moonc tests/test_api.moon
